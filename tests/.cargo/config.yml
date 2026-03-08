@@ -44,5 +44,5 @@ projects:
     sops:
       enabled: true
       files:
-        - input: "./secrets.enc.env"
-          output: "./secrets.env"
+        - input: "./tests/my-test-project/secrets.enc.env"
+          output: "tests/my-test-project/secrets.env"
