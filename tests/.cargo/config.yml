@@ -43,3 +43,6 @@ projects:
     poll_interval: "10m"
     sops:
       enabled: true
+      files:
+        - input: "./secrets.enc.env"
+          output: "./secrets.env"

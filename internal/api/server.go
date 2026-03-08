@@ -69,6 +69,7 @@ func (s *Server) setupRoutes() *gin.Engine {
 		authed.POST("/projects/sync", handlers.SyncAllProjects(s.Manager))
 		authed.POST("/projects/:name/sync", handlers.SyncProject(s.Manager))
 		authed.GET("/projects/:name/status", handlers.GetProjectStatus(s.Manager))
+		authed.GET("/key/age", handlers.GetAgePublicKey(s.Config.Workdir))
 	}
 
 	return router

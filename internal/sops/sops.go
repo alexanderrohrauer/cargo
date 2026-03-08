@@ -98,6 +98,11 @@ func Encrypt(sopsConfig config.SOPSConfig, plaintextFilePath, outputPath string)
 	return nil
 }
 
+// ReadPublicKey reads an age private key file and extracts the public key (recipient).
+func ReadPublicKey(privateKeyPath string) (string, error) {
+	return readPublicKeyFromPrivateKeyFile(privateKeyPath)
+}
+
 // readPublicKeyFromPrivateKeyFile reads an age private key file and extracts the public key
 // by parsing the identities with the age library.
 func readPublicKeyFromPrivateKeyFile(privateKeyPath string) (string, error) {

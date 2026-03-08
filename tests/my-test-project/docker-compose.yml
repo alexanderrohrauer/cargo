@@ -1,6 +1,6 @@
 services:
   my-busybox:
-    image: busybox:1.37.0
+    image: busybox:1.36.0
     container_name: busybox_test
     environment:
       NOT_SECRET: "Not a secret"

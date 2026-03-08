@@ -10,14 +10,8 @@ import (
 )
 
 // Up runs `docker compose up -d` in the given project directory.
-// If envFile is non-empty, it is passed via --env-file.
-// hostWorkdir is passed as CARGO_HOST_WORKDIR and hostProjectDir as CARGO_PROJECT_DIR.
-func Up(projectDir, composeFile string, envFile string, hostProjectDir string) error {
+func Up(projectDir, composeFile string, hostProjectDir string) error {
 	args := []string{"compose", "-f", composeFile, "up", "-d"}
-	if envFile != "" {
-		args = []string{"compose", "--env-file", envFile, "-f", composeFile, "up", "-d"}
-	}
-
 	cmd := buildCommand(projectDir, hostProjectDir, args...)
 	slog.Info("running docker compose up", "dir", projectDir, "file", composeFile)
 	output, err := cmd.CombinedOutput()

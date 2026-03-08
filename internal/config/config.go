@@ -43,9 +43,33 @@ type ComposeConfig struct {
 }
 
 type SOPSConfig struct {
-	Enabled bool   `yaml:"enabled"`
-	AgeKey  string `yaml:"age_key"`  // path to age private key file
-	EnvFile string `yaml:"env_file"` // encrypted env file path in repo
+	Enabled bool       `yaml:"enabled"`
+	AgeKey  string     `yaml:"age_key"` // path to age private key file
+	Files   []SOPSFile `yaml:"files"`   // list of files to decrypt
+}
+
+// SOPSFile describes one SOPS-encrypted file and where to write the decrypted output.
+type SOPSFile struct {
+	Input  string `yaml:"input"`  // encrypted file path relative to the project dir
+	Output string `yaml:"output"` // decrypted output path relative to the project dir; defaults to Input with .enc stripped
+}
+
+// ResolvedOutput returns the output path for the decrypted file.
+// If Output is set it is returned as-is; otherwise .enc is stripped from Input
+// (handling both "file.enc" and "file.enc.ext" patterns). Falls back to Input+".dec".
+func (f SOPSFile) ResolvedOutput() string {
+	if f.Output != "" {
+		return f.Output
+	}
+	ext := filepath.Ext(f.Input)
+	base := strings.TrimSuffix(f.Input, ext)
+	if strings.HasSuffix(base, ".enc") {
+		return strings.TrimSuffix(base, ".enc") + ext
+	}
+	if strings.HasSuffix(f.Input, ".enc") {
+		return strings.TrimSuffix(f.Input, ".enc")
+	}
+	return f.Input + ".dec"
 }
 
 // Load reads a YAML config file and returns the parsed Config.

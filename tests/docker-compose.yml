@@ -1,0 +1,16 @@
+services:
+  cargo:
+    image: cargo:latest
+    ports:
+      - "8443:8443"
+    volumes:
+      - ./.cargo:/root/.cargo
+      - /var/run/docker.sock:/var/run/docker.sock
+  cargo-init:
+    image: cargo:latest
+    volumes:
+      - ./.cargo:/root/.cargo
+    command:
+      - init
+    profiles:
+      - donotstart

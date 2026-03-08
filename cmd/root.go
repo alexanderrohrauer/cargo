@@ -40,4 +40,5 @@ func init() {
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(serverCmd)
 	rootCmd.AddCommand(projectCmd)
+	rootCmd.AddCommand(keyCmd)
 }

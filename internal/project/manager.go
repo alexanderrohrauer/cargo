@@ -95,18 +95,18 @@ func (m *Manager) SyncProject(name string) SyncResult {
 
 	hostComposeDir := filepath.Join(m.Config.HostWorkdir, "projects", name, projectCfg.Compose.Path)
 
-	// Handle SOPS decryption
-	var envFile string
-	if projectCfg.SOPS.Enabled && projectCfg.SOPS.EnvFile != "" {
-		encryptedEnvPath := filepath.Join(projectDir, projectCfg.SOPS.EnvFile)
-		decryptedEnvPath := filepath.Join(projectDir, ".decrypted.env")
+	// Handle SOPS decryption for all configured files
+	if projectCfg.SOPS.Enabled {
+		for _, f := range projectCfg.SOPS.Files {
+			inputPath := filepath.Join(projectDir, f.Input)
+			outputPath := filepath.Join(projectDir, f.ResolvedOutput())
 
-		slog.Info("decrypting SOPS env file", "project", name, "encrypted", encryptedEnvPath)
-		if err := sops.Decrypt(projectCfg.SOPS, encryptedEnvPath, decryptedEnvPath); err != nil {
-			result.Error = fmt.Errorf("decrypting SOPS env file: %w", err)
-			return result
+			slog.Info("decrypting SOPS file", "project", name, "input", inputPath, "output", outputPath)
+			if err := sops.Decrypt(projectCfg.SOPS, inputPath, outputPath); err != nil {
+				result.Error = fmt.Errorf("decrypting SOPS file %q: %w", f.Input, err)
+				return result
+			}
 		}
-		envFile = decryptedEnvPath
 	}
 
 	// Pull latest docker images
@@ -117,7 +117,7 @@ func (m *Manager) SyncProject(name string) SyncResult {
 
 	// Start the compose project
 	slog.Info("starting compose project", "project", name)
-	if err := compose.Up(composeDir, composeFile, envFile, hostComposeDir); err != nil {
+	if err := compose.Up(composeDir, composeFile, hostComposeDir); err != nil {
 		result.Error = fmt.Errorf("starting compose project: %w", err)
 		return result
 	}
