@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  my-busybox:
+    image: busybox:1.37.0
+    container_name: busybox_test
+    environment:
+      NOT_SECRET: "Not a secret"
+    env_file:
+      - ./secrets.env
+    volumes:
+      - ./config.ini:/root/config.ini:ro
+    command: ["sh", "-c", "echo 'BusyBox is running...' && sleep 3600"]
+    restart: always

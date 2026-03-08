@@ -1,0 +1,38 @@
+# Cargo example configuration file
+# Copy this file to ~/.cargo/config.yml and adjust to your environment.
+# Run 'cargo init' first to generate SSL certs, age keys, and auth token.
+
+# Directory where project repositories and runtime data are stored.
+# Default: ~/.cargo/workdir
+workdir: ~/.cargo/workdir
+
+server:
+  # IP address or hostname to bind the HTTPS REST API server on.
+  # Use "0.0.0.0" to listen on all interfaces.
+  # Default: 0.0.0.0
+  host: "0.0.0.0"
+
+  # Port for the HTTPS REST API.
+  # Default: 8443
+  port: 8443
+
+projects:
+  # --- Example 1: Public GitHub repo, main branch, no SOPS ---
+  - name: my-test-project
+    git:
+      url: "https://github.com/alexanderrohrauer/cargo.git"
+      # Branch, tag, or full commit SHA to checkout.
+      # Default: main
+      revision: "main"
+    compose:
+      # Subdirectory within the repository that contains the compose file.
+      # Leave empty if the compose file is in the repository root.
+      path: "tests/my-test-project"
+      # Name of the compose file. Default: docker-compose.yml
+      file: "docker-compose.yml"
+    # Polling interval: sync automatically on this interval.
+    # Valid Go duration strings: "5m", "1h30m", "30s", etc.
+    # Leave empty to disable polling (manual sync only).
+    poll_interval: "10m"
+    sops:
+      enabled: true
