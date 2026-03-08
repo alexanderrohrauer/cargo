@@ -60,7 +60,10 @@ func Clone(projectCfg config.ProjectConfig, destDir string) error {
 	return nil
 }
 
-// Pull fetches and pulls the latest changes in an already-cloned repository.
+// Pull fetches the latest changes from the remote and hard-resets the worktree
+// to the remote ref. Using fetch+reset instead of pull avoids go-git's
+// "worktree contains unstaged changes" check, which would fail when generated
+// files (e.g. SOPS-decrypted secrets) are present inside the repo directory.
 func Pull(projectCfg config.ProjectConfig, repoDir string) error {
 	repo, err := gogit.PlainOpen(repoDir)
 	if err != nil {
@@ -72,32 +75,43 @@ func Pull(projectCfg config.ProjectConfig, repoDir string) error {
 		return fmt.Errorf("resolving auth for project %q: %w", projectCfg.Name, err)
 	}
 
+	slog.Info("fetching repository", "dir", repoDir)
+	fetchErr := repo.Fetch(&gogit.FetchOptions{
+		Auth:     auth,
+		Progress: os.Stdout,
+		Force:    true,
+	})
+	if fetchErr != nil && fetchErr != gogit.NoErrAlreadyUpToDate {
+		return fmt.Errorf("fetching %q: %w", repoDir, fetchErr)
+	}
+
+	// Resolve the remote tracking ref to get the commit hash to reset to.
+	remoteRef, err := repo.Reference(plumbing.NewRemoteReferenceName("origin", "HEAD"), true)
+	if err != nil {
+		// Fall back to the configured revision or plain HEAD.
+		remoteRef, err = repo.Head()
+		if err != nil {
+			return fmt.Errorf("resolving HEAD for %q: %w", repoDir, err)
+		}
+	}
+
 	wt, err := repo.Worktree()
 	if err != nil {
 		return fmt.Errorf("getting worktree: %w", err)
 	}
 
-	// Hard-reset to discard any local modifications (e.g. decrypted env files
-	// written into the repo dir) so the pull cannot fail with "unstaged changes".
-	if resetErr := wt.Reset(&gogit.ResetOptions{Mode: gogit.HardReset}); resetErr != nil {
-		slog.Warn("hard reset before pull failed", "dir", repoDir, "error", resetErr)
-	}
-
-	pullOpts := &gogit.PullOptions{
-		Auth:     auth,
-		Progress: os.Stdout,
-		Force:    true,
-	}
-
-	slog.Info("pulling repository", "dir", repoDir)
-	err = wt.Pull(pullOpts)
-	if err != nil && err != gogit.NoErrAlreadyUpToDate {
-		return fmt.Errorf("pulling %q: %w", repoDir, err)
+	// Hard-reset to the remote commit — untracked files are left in place but
+	// tracked files are restored, and the unstaged-changes check is skipped.
+	if err := wt.Reset(&gogit.ResetOptions{
+		Commit: remoteRef.Hash(),
+		Mode:   gogit.HardReset,
+	}); err != nil {
+		return fmt.Errorf("resetting %q to %s: %w", repoDir, remoteRef.Hash(), err)
 	}
 
 	if projectCfg.Git.Revision != "" {
 		if err := Checkout(repo, projectCfg.Git.Revision); err != nil {
-			return fmt.Errorf("checking out revision %q after pull: %w", projectCfg.Git.Revision, err)
+			return fmt.Errorf("checking out revision %q after fetch: %w", projectCfg.Git.Revision, err)
 		}
 	}
 
