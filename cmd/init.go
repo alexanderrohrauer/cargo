@@ -117,6 +117,13 @@ func buildSampleConfig(workdir, ageKeyPath string) string {
 # Directory where project repositories and runtime data are stored
 workdir: %s
 
+# Host-side path of the workdir as seen by the Docker daemon.
+# Only needed when cargo runs inside a container: set this to the host path that
+# is bind-mounted into the container as 'workdir'. Compose files can then reference
+# ${CARGO_HOST_WORKDIR} in volume definitions and Docker will resolve paths correctly.
+# Default: same as workdir (correct for non-containerized usage)
+# host_workdir: /host/path/to/workdir
+
 server:
   # Interface to listen on (0.0.0.0 listens on all interfaces)
   host: "0.0.0.0"

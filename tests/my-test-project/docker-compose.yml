@@ -7,7 +7,7 @@ services:
     environment:
       NOT_SECRET: "Not a secret"
     env_file:
-      - ./secrets.env
+      - ${CARGO_HOST_WORKDIR}/my-test-project/secrets.env
     volumes:
       - ./config.ini:/root/config.ini:ro
     command: ["sh", "-c", "echo 'BusyBox is running...' && sleep 3600"]

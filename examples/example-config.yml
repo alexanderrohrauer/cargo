@@ -6,6 +6,9 @@
 # Default: ~/.cargo/workdir
 workdir: ~/.cargo/workdir
 
+# When running containerized set the following options to the workdir path on the docker host:
+host_workdir: ~/.cargo/workdir
+
 server:
   # IP address or hostname to bind the HTTPS REST API server on.
   # Use "0.0.0.0" to listen on all interfaces.

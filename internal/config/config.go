@@ -10,9 +10,10 @@ import (
 )
 
 type Config struct {
-	Workdir  string          `yaml:"workdir"`
-	Server   ServerConfig    `yaml:"server"`
-	Projects []ProjectConfig `yaml:"projects"`
+	Workdir     string          `yaml:"workdir"`
+	HostWorkdir string          `yaml:"host_workdir"`
+	Server      ServerConfig    `yaml:"server"`
+	Projects    []ProjectConfig `yaml:"projects"`
 }
 
 type ServerConfig struct {
@@ -72,6 +73,13 @@ func setDefaults(cfg *Config) {
 	if cfg.Workdir == "" {
 		cfg.Workdir = "~/.cargo/workdir"
 	}
+	// HostWorkdir is the workdir path as seen by the Docker daemon on the host.
+	// When cargo runs inside a container, this must be set to the host-side mount path
+	// so that Docker volume mounts in compose files resolve correctly.
+	// Defaults to workdir (correct for non-containerized usage).
+	if cfg.HostWorkdir == "" {
+		cfg.HostWorkdir = cfg.Workdir
+	}
 	if cfg.Server.Port == 0 {
 		cfg.Server.Port = 8443
 	}
@@ -90,6 +98,7 @@ func setDefaults(cfg *Config) {
 
 func expandPaths(cfg *Config) {
 	cfg.Workdir = expandHome(cfg.Workdir)
+	cfg.HostWorkdir = expandHome(cfg.HostWorkdir)
 	for i := range cfg.Projects {
 		if cfg.Projects[i].Git.SSHKey != "" {
 			cfg.Projects[i].Git.SSHKey = expandHome(cfg.Projects[i].Git.SSHKey)

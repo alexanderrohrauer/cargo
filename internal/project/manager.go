@@ -109,13 +109,13 @@ func (m *Manager) SyncProject(name string) SyncResult {
 
 	// Pull latest docker images
 	slog.Info("pulling docker images", "project", name)
-	if err := compose.Pull(composeDir, composeFile); err != nil {
+	if err := compose.Pull(composeDir, composeFile, m.Config.HostWorkdir); err != nil {
 		slog.Warn("docker compose pull failed (continuing)", "project", name, "error", err)
 	}
 
 	// Start the compose project
 	slog.Info("starting compose project", "project", name)
-	if err := compose.Up(composeDir, composeFile, envFile); err != nil {
+	if err := compose.Up(composeDir, composeFile, envFile, m.Config.HostWorkdir); err != nil {
 		result.Error = fmt.Errorf("starting compose project: %w", err)
 		return result
 	}
@@ -149,7 +149,7 @@ func (m *Manager) StatusProject(name string) (string, error) {
 	composeDir := filepath.Join(projectDir, projectCfg.Compose.Path)
 	composeFile := filepath.Join(composeDir, projectCfg.Compose.File)
 
-	status, err := compose.Status(composeDir, composeFile)
+	status, err := compose.Status(composeDir, composeFile, m.Config.HostWorkdir)
 	if err != nil {
 		return "", fmt.Errorf("getting status for project %q: %w", name, err)
 	}
