@@ -12,13 +12,13 @@ import (
 // Up runs `docker compose up -d` in the given project directory.
 // If envFile is non-empty, it is passed via --env-file.
 // hostWorkdir is passed as CARGO_HOST_WORKDIR and hostProjectDir as CARGO_PROJECT_DIR.
-func Up(projectDir, composeFile string, envFile string, hostWorkdir, hostProjectDir string) error {
+func Up(projectDir, composeFile string, envFile string, hostProjectDir string) error {
 	args := []string{"compose", "-f", composeFile, "up", "-d"}
 	if envFile != "" {
 		args = []string{"compose", "--env-file", envFile, "-f", composeFile, "up", "-d"}
 	}
 
-	cmd := buildCommand(projectDir, hostWorkdir, hostProjectDir, args...)
+	cmd := buildCommand(projectDir, hostProjectDir, args...)
 	slog.Info("running docker compose up", "dir", projectDir, "file", composeFile)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
@@ -30,8 +30,8 @@ func Up(projectDir, composeFile string, envFile string, hostWorkdir, hostProject
 
 // Down runs `docker compose down` in the given project directory.
 // hostWorkdir is passed as CARGO_HOST_WORKDIR and hostProjectDir as CARGO_PROJECT_DIR.
-func Down(projectDir, composeFile string, hostWorkdir, hostProjectDir string) error {
-	cmd := buildCommand(projectDir, hostWorkdir, hostProjectDir, "compose", "-f", composeFile, "down")
+func Down(projectDir, composeFile string, hostProjectDir string) error {
+	cmd := buildCommand(projectDir, hostProjectDir, "compose", "-f", composeFile, "down")
 	slog.Info("running docker compose down", "dir", projectDir, "file", composeFile)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
@@ -43,8 +43,8 @@ func Down(projectDir, composeFile string, hostWorkdir, hostProjectDir string) er
 
 // Pull runs `docker compose pull` to pull the latest images.
 // hostWorkdir is passed as CARGO_HOST_WORKDIR and hostProjectDir as CARGO_PROJECT_DIR.
-func Pull(projectDir, composeFile string, hostWorkdir, hostProjectDir string) error {
-	cmd := buildCommand(projectDir, hostWorkdir, hostProjectDir, "compose", "-f", composeFile, "pull")
+func Pull(projectDir, composeFile string, hostProjectDir string) error {
+	cmd := buildCommand(projectDir, hostProjectDir, "compose", "-f", composeFile, "pull")
 	slog.Info("running docker compose pull", "dir", projectDir, "file", composeFile)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
@@ -56,8 +56,8 @@ func Pull(projectDir, composeFile string, hostWorkdir, hostProjectDir string) er
 
 // Status runs `docker compose ps --format json` and returns the raw JSON output.
 // hostWorkdir is passed as CARGO_HOST_WORKDIR and hostProjectDir as CARGO_PROJECT_DIR.
-func Status(projectDir, composeFile string, hostWorkdir, hostProjectDir string) (string, error) {
-	cmd := buildCommand(projectDir, hostWorkdir, hostProjectDir, "compose", "-f", composeFile, "ps", "--format", "json")
+func Status(projectDir, composeFile string, hostProjectDir string) (string, error) {
+	cmd := buildCommand(projectDir, hostProjectDir, "compose", "-f", composeFile, "ps", "--format", "json")
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
@@ -75,7 +75,7 @@ func Status(projectDir, composeFile string, hostWorkdir, hostProjectDir string) 
 // buildCommand constructs an exec.Cmd for docker with the given args, setting the working
 // directory to projectDir and resolving the compose file as an absolute path if needed.
 // hostWorkdir is exposed as CARGO_HOST_WORKDIR and hostProjectDir as CARGO_PROJECT_DIR.
-func buildCommand(projectDir string, hostWorkdir string, hostProjectDir string, args ...string) *exec.Cmd {
+func buildCommand(projectDir string, hostProjectDir string, args ...string) *exec.Cmd {
 	dockerPath, err := exec.LookPath("docker")
 	if err != nil {
 		dockerPath = "docker"
@@ -92,7 +92,6 @@ func buildCommand(projectDir string, hostWorkdir string, hostProjectDir string, 
 	cmd := exec.Command(dockerPath, args...)
 	cmd.Dir = projectDir
 	cmd.Env = append(os.Environ(),
-		"CARGO_HOST_WORKDIR="+hostWorkdir,
 		"CARGO_PROJECT_DIR="+hostProjectDir,
 	)
 	return cmd

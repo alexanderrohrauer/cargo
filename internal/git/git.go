@@ -77,6 +77,12 @@ func Pull(projectCfg config.ProjectConfig, repoDir string) error {
 		return fmt.Errorf("getting worktree: %w", err)
 	}
 
+	// Hard-reset to discard any local modifications (e.g. decrypted env files
+	// written into the repo dir) so the pull cannot fail with "unstaged changes".
+	if resetErr := wt.Reset(&gogit.ResetOptions{Mode: gogit.HardReset}); resetErr != nil {
+		slog.Warn("hard reset before pull failed", "dir", repoDir, "error", resetErr)
+	}
+
 	pullOpts := &gogit.PullOptions{
 		Auth:     auth,
 		Progress: os.Stdout,

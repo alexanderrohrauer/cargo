@@ -93,12 +93,7 @@ func (m *Manager) SyncProject(name string) SyncResult {
 	composeDir := filepath.Join(projectDir, projectCfg.Compose.Path)
 	composeFile := filepath.Join(composeDir, projectCfg.Compose.File)
 
-	// Compute the host-side path of the compose directory for CARGO_PROJECT_DIR
-	relComposeDir, err := filepath.Rel(m.Workdir, composeDir)
-	if err != nil {
-		relComposeDir = composeDir
-	}
-	hostComposeDir := filepath.Join(m.Config.HostWorkdir, relComposeDir)
+	hostComposeDir := filepath.Join(m.Config.HostWorkdir, "projects", name, projectCfg.Compose.Path)
 
 	// Handle SOPS decryption
 	var envFile string
@@ -116,13 +111,13 @@ func (m *Manager) SyncProject(name string) SyncResult {
 
 	// Pull latest docker images
 	slog.Info("pulling docker images", "project", name)
-	if err := compose.Pull(composeDir, composeFile, m.Config.HostWorkdir, hostComposeDir); err != nil {
+	if err := compose.Pull(composeDir, composeFile, hostComposeDir); err != nil {
 		slog.Warn("docker compose pull failed (continuing)", "project", name, "error", err)
 	}
 
 	// Start the compose project
 	slog.Info("starting compose project", "project", name)
-	if err := compose.Up(composeDir, composeFile, envFile, m.Config.HostWorkdir, hostComposeDir); err != nil {
+	if err := compose.Up(composeDir, composeFile, envFile, hostComposeDir); err != nil {
 		result.Error = fmt.Errorf("starting compose project: %w", err)
 		return result
 	}
@@ -156,13 +151,9 @@ func (m *Manager) StatusProject(name string) (string, error) {
 	composeDir := filepath.Join(projectDir, projectCfg.Compose.Path)
 	composeFile := filepath.Join(composeDir, projectCfg.Compose.File)
 
-	relComposeDir, err := filepath.Rel(m.Workdir, composeDir)
-	if err != nil {
-		relComposeDir = composeDir
-	}
-	hostComposeDir := filepath.Join(m.Config.HostWorkdir, relComposeDir)
+	hostComposeDir := filepath.Join(m.Config.HostWorkdir, "projects", name, projectCfg.Compose.Path)
 
-	status, err := compose.Status(composeDir, composeFile, m.Config.HostWorkdir, hostComposeDir)
+	status, err := compose.Status(composeDir, composeFile, hostComposeDir)
 	if err != nil {
 		return "", fmt.Errorf("getting status for project %q: %w", name, err)
 	}
