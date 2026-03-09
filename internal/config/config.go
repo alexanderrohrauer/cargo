@@ -117,6 +117,9 @@ func setDefaults(cfg *Config) {
 		if cfg.Projects[i].Git.Revision == "" {
 			cfg.Projects[i].Git.Revision = "main"
 		}
+		if cfg.Projects[i].SOPS.AgeKey == "" {
+			cfg.Projects[i].SOPS.AgeKey = filepath.Join(cfg.Workdir, "age.key")
+		}
 	}
 }
 

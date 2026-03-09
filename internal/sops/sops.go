@@ -51,6 +51,7 @@ func Decrypt(sopsConfig config.SOPSConfig, encryptedFilePath, outputPath string)
 		return fmt.Errorf("sops not found in PATH: %w", err)
 	}
 
+	slog.Info("decrypting SOPS file", "input", encryptedFilePath, "output", outputPath, "age-key-path", sopsConfig.AgeKey)
 	// #nosec G204 - paths come from configuration, not user input
 	cmd := exec.Command(sopsPath, "--decrypt", "--output", outputPath, encryptedFilePath)
 	cmd.Env = append(os.Environ(), fmt.Sprintf("SOPS_AGE_KEY_FILE=%s", sopsConfig.AgeKey))

@@ -34,7 +34,7 @@ RUN apk add --no-cache \
     && rm -rf /var/cache/apk/*
 
 # Install sops from GitHub releases (supports amd64 and arm64)
-ARG SOPS_VERSION=3.8.1
+ARG SOPS_VERSION=3.12.1
 ARG TARGETARCH=amd64
 RUN SOPS_ARCH="${TARGETARCH}" && \
     [ "${TARGETARCH}" = "arm64" ] && SOPS_ARCH="arm64" || true && \
